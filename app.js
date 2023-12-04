@@ -6,6 +6,7 @@ app.use(express.json());
 app.use(require('./helpers/mongo'))
 
 app.use("/hall", require("./control/HallAPI"))
+app.use("/user", require("./control/UserAPI"))
 
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);

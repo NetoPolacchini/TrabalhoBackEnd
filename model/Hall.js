@@ -37,8 +37,14 @@ module.exports = {
             preco: preco
         })
 
-        await hall.save();
-        return hall;
+        try {
+            await hall.save();
+            console.log('Salão salvo com sucesso:', hall);
+            return hall;
+        } catch (error) {
+            console.error('Erro ao salvar Salão:', error);
+            throw error;
+        }
     },
 
     update: async function(id, obj) {

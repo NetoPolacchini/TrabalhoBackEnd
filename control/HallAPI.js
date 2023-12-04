@@ -19,15 +19,16 @@ router.get("/:id", (req, res) => {
     })
 })
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
     const {nome, endereco, capacidadeMaxima, preco} = req.body
 
-    HallDAO.save(nome, endereco, capacidadeMaxima, preco).then(salao => {
-        res.json(sucess(salao))
-    }).catch(err => {
-        console.log(err)
-        res.status(500).json(fail("Falha ao salvar o novo Salão"))
-    })
+    try {
+        const hall = await HallDAO.save(nome, endereco, capacidadeMaxima, preco)
+        res.json(sucess(hall));
+    } catch (err){
+        console.error("Erro:", err);
+        res.status(500).json(fail("Falha ao salvar o novo Salão"));
+    }
 })
 
 module.exports = router;
