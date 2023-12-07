@@ -14,7 +14,6 @@ const HallSchema = new mongoose.Schema( {
 })
 
 const HallModel = mongoose.model('Hall', HallSchema)
-
 module.exports = {
 
     delete: async function (id) {
@@ -48,16 +47,20 @@ module.exports = {
     },
 
     update: async function(id, obj) {
-        //return await BookModel.findByIdAndUpdate(id, {$set: obj})
 
-        let hall = await new HallModel.findById(id)
-        if (!hall) {
-            return false
+        try{
+            let hall = await HallModel.findById(id);
+
+            if(!hall){
+                return false;
+            }
+            Object.assign(hall, obj);
+            await hall.save();
+            return hall;
+        } catch (err){
+            console.error('Erro durante a atualização', err)
+            throw err;
         }
-
-        Object.keys(obj).forEach(key => hall[key] = obj[key])
-        await hall.save()
-        return hall
     },
 
 }

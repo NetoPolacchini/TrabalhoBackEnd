@@ -1,10 +1,9 @@
 module.exports = {
-    sucess: function(obj, name, message) {
+    sucess: function(obj, message) {
         let resp = {status: true}
-        if (name) resp[name] = obj
-        else resp.obj = obj
+        resp.obj = obj
 
-        return {resp: resp, message: message}
+        return {message, resp}
     },
     fail: function(message) {
         return {status: false, message: message}
