@@ -4,6 +4,7 @@ const router = express.Router()
 const {sucess, fail} = require("../helpers/resposta")
 const HallDAO = require('../model/Hall')
 
+//Return all Hall`s
 router.get("/", async (req, res) => {
     const limite = parseInt(req.query.limite) || 5;
     const pagina = parseInt(req.query.pagina) || 1;
@@ -16,6 +17,7 @@ router.get("/", async (req, res) => {
     }
 })
 
+//Return Hall per ID
 router.get("/:id", (req, res) => {
     HallDAO.getById(req.params.id).then(hall => {
         res.json(sucess(hall, 'Salão Localizado'))
@@ -25,6 +27,7 @@ router.get("/:id", (req, res) => {
     })
 })
 
+//Delete Hall per ID
 router.delete("/:id", (req, res) => {
     HallDAO.delete(req.params.id).then(hall => {
         res.json(sucess(hall, 'Salão Deletado'))
@@ -34,6 +37,7 @@ router.delete("/:id", (req, res) => {
     })
 })
 
+////Change specific Hall
 router.put("/:id", async (req, res) => {
     const hallID = req.params.id;
     const newData = req.body;
@@ -51,7 +55,7 @@ router.put("/:id", async (req, res) => {
 })
 
 
-
+//Register Hall
 router.post("/", async (req, res) => {
     const {nome, endereco, capacidadeMaxima, preco} = req.body
 

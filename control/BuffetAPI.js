@@ -1,22 +1,24 @@
 const express = require("express")
 const router = express.Router()
-
+const vToken = require('../helpers/authenticate');
 const {sucess, fail} = require("../helpers/resposta")
 const BuffetDAO = require('../model/Buffet')
 const HallDAO = require("../model/Hall");
 
+//Return All Buffet`s
 router.get("/", async (req, res) => {
     const limite = parseInt(req.query.limite) || 5;
     const pagina = parseInt(req.query.pagina) || 1;
 
     try{
         const buffets = await HallDAO.list(limite, pagina)
-        res.json(sucess(buffets, "list"));
+        res.json(sucess(buffets, "Buffets"));
     } catch (err){
         res.status(500).json(err.message);
     }
 })
 
+//Return Specific Buffet
 router.get("/:id", (req, res) => {
     BuffetDAO.getById(req.params.id).then(buffet => {
         res.json(sucess(buffet, 'Buffet Localizado'))
@@ -26,7 +28,8 @@ router.get("/:id", (req, res) => {
     })
 })
 
-router.delete("/:id", (req, res) => {
+//Delete Specific Buffet
+router.delete("/:id",vToken.isAdmin, (req, res) => {
     BuffetDAO.delete(req.params.id).then(buffet => {
         res.json(sucess(buffet, 'Buffet Deletado'))
     }).catch(err => {
@@ -35,7 +38,8 @@ router.delete("/:id", (req, res) => {
     })
 })
 
-router.put("/:id", async (req, res) => {
+//Change specific Buffet
+router.put("/:id",vToken.isAdmin, async (req, res) => {
     const buffetID = req.params.id;
     const newData = req.body;
     try{
@@ -51,7 +55,8 @@ router.put("/:id", async (req, res) => {
     }
 })
 
-router.post("/", async (req, res) => {
+//Register new buffet
+router.post("/", vToken.isAdmin, async (req, res) => {
     const {nome, tipoComida} = req.body
 
     try {

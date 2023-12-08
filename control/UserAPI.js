@@ -8,7 +8,7 @@ const vToken = require('../helpers/authenticate');
 const {eventos} = require("../model/User");
 
 
-
+//Register User
 router.post('/cadastro', async(req, res)=>{
 
     const {nome, email, senha} = req.body;
@@ -26,6 +26,7 @@ router.post('/cadastro', async(req, res)=>{
     }
 })
 
+//Login
 router.post('/login', async(req, res)=>{
     const {emailFornecido, senhaFornecida} = req.body;
 
@@ -39,12 +40,12 @@ router.post('/login', async(req, res)=>{
         }else{
             res.json(fail('Erro ao autenticar'));
         }
-    } catch (erro){
-        res.json(fail('Falha ao autenticar usuário'));
-        console.log('Erro:', erro)
+    } catch (err){
+        res.json(err.message);
     }
 })
 
+//Create another ADM
 router.post('/admin/create', vToken.isAdmin, async (req, res) => {
     const {nome, email, senha} = req.body;
 
@@ -61,6 +62,7 @@ router.post('/admin/create', vToken.isAdmin, async (req, res) => {
     }
 });
 
+//List Non admin users
 router.get('/admin/listNonAdmin',vToken.isAdmin, async(req, res) => {
     const limite = parseInt(req.query.limite) || 5;
     const pagina = parseInt(req.query.pagina) || 1;
@@ -73,6 +75,7 @@ router.get('/admin/listNonAdmin',vToken.isAdmin, async(req, res) => {
     }
 });
 
+//Delete Specific User
 router.delete('/admin/listNonAdmin/delete/:id',vToken.isAdmin, async(req, res) => {
     try{
         const user = await UserDAO.delete(req.params.id)
@@ -82,6 +85,26 @@ router.delete('/admin/listNonAdmin/delete/:id',vToken.isAdmin, async(req, res) =
     }
 });
 
+//Update Some User by ADM
+router.put('/admin/listNonAdmin/update/:id',vToken.isAdmin, async(req, res) => {
+
+    const newData = req.body;
+    const userID = req.params.id
+
+    try{
+        const updateUser = await UserDAO.update(userID, newData)
+
+        if(updateUser){
+            res.json(sucess(updateUser, 'Os dados do usuário foram atualizados'))
+        }else{
+            res.status(500).json(fail("Falha ao atualizar dados do Usuário"));
+        }
+    } catch (err){
+        res.json(err.message)
+    }
+});
+
+//Update User
 router.put('/updateUser', vToken.token, async(req, res) => {
 
 
@@ -101,32 +124,54 @@ router.put('/updateUser', vToken.token, async(req, res) => {
     }
 });
 
-router.post('/evento', vToken.token, async (req, res)=>{
-    const userID = req.user.id;
-    const { idSalao, idBuffet } = req.body;
+//Return All Hall`s and Buffet`s available
+router.get("/disponiveis",vToken.token, async (req, res)=> {
+    const limite = parseInt(req.query.limite) || 5;
+    const pagina = parseInt(req.query.pagina) || 1;
+    const limite2 = parseInt(req.query.limite) || 5;
+    const pagina2 = parseInt(req.query.pagina) || 1;
+    const data = req.query.data;
 
     try{
-        const salaoValido = await HallDAO.getById(idSalao);
-        const buffetValido = await BuffetDAO.getById(idBuffet);
+        const dataFormatado = vToken.validData(data)
+        const halls = await HallDAO.listDisponiveis(limite, pagina, dataFormatado);
+        const buffets = await BuffetDAO.list(limite2, pagina2)
 
-        if(!salaoValido){
-            return res.status(400).json(fail('ID de salão inválido.'));
+        const responseData = {
+            halls:halls,
+            buffets:buffets
         }
-
-        if(!buffetValido){
-            return res.status(400).json(fail('ID de Buffet inválido.'));
-        }
-
-        await eventos(userID, idSalao, idBuffet)
-
-        res.json(sucess('Evento atualizado com sucesso.'));
-
-    }catch (err){
-        res.json( err.message );
+        res.json(sucess(responseData, 'Lista de Salões e buffets disponíveis '))
+    } catch(err){
+        res.json(err.message)
     }
 })
 
-router.get('/restrito', vToken.token, (req, res) => {
-    res.json({ mensagem: 'Rota protegida Acessada com sucesso!' });
-});
+//Choose buffet and hall
+router.put("/disponiveis",vToken.token, async (req, res)=> {
+
+    const userId = req.user.id;
+    const{idSalao,idBuffet} = req.body
+    const data = req.query.data;
+
+    try{
+        const dataFormatado = vToken.validData(data)
+        const salao = await HallDAO.getById(idSalao);
+        const buffet = await BuffetDAO.getById(idBuffet);
+
+        if (!salao || !buffet) {
+            return res.status(404).json(fail('Salão ou buffet não encontrado. Insira ID`s válidos'));
+        }
+
+        let hall = await HallDAO.getByIdAndDate(idSalao, dataFormatado)
+        if(hall){
+            const user = await UserDAO.alugarSalaoBuffet(userId, idSalao, idBuffet, dataFormatado);
+            res.json(sucess(user, 'Salão e buffet alugados com sucesso'));
+        }
+
+    } catch (err){
+        res.json(err.message)
+    }
+})
+
 module.exports = router;

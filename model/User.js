@@ -25,27 +25,18 @@ const UserSchema = new mongoose.Schema( {
 const UserModel = mongoose.model('User', UserSchema)
 
 module.exports = {
-
-    eventos: async function(userID, hall, buffet){
-        try{
-            return await UserModel.findByIdAndUpdate(userID,{
-                $push: {'eventos.halls': hall, 'eventos.buffets': buffet}
-            })
-        }catch (err){
-            throw err
-        }
-    },
-
     authenticate: async function (email, senha) {
-
         try {
+
             const user = await UserModel.findOne({email});
+
             if (!user) {
-                console.log('Email não cadastrado');
-                return false;
+                console.log('Email não cadastrado')
+                throw new Error('Email não cadastrado');
             }
 
             const isPasswordValid = await bcrypt.compare(senha, user.senha);
+
             if (isPasswordValid) {
                 console.log('Usuario autenticado com sucesso', user.email);
 
@@ -60,7 +51,7 @@ module.exports = {
 
             } else {
                 console.log('senha incorreta')
-                return false
+                throw new Error('Senha Incorreta')
             }
         } catch (err) {
             console.log('Erro ao autenticar usuário:', err);
@@ -141,6 +132,12 @@ module.exports = {
     update: async function (id, obj) {
 
         try {
+
+            const existingUser = await UserModel.findOne({ email: obj.email });
+            if (existingUser && existingUser._id.toString() !== id) {
+                throw new Error('O email já está cadastrado para outro usuário');
+            }
+
             let user = await UserModel.findById(id);
             if (!user) {
                 throw new Error('Usuário não encontrado');
