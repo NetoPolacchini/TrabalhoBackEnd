@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const {sucess, fail} = require("../helpers/resposta");
 const UserDAO = require('../model/User');
+const vToken = require('../helpers/authenticate');
+const jwt = require('jsonwebtoken')
+
 
 
 router.post('/cadastro', async(req, res)=>{
@@ -25,14 +28,26 @@ router.post('/login', async(req, res)=>{
     const {emailFornecido, senhaFornecida} = req.body;
 
     try{
-        teste = await UserDAO.authenticate(emailFornecido, senhaFornecida);
-        res.json(sucess(teste));
+        token = await UserDAO.authenticate(emailFornecido, senhaFornecida);
+        if(token){
+            res.header('authorization', `Bearer ${token}`);
+
+            res.json(sucess(token, 'Usuário Autenticado com sucesso'));
+
+        }else{
+            res.json(fail('Erro ao autenticar'));
+        }
     } catch (erro){
-        res.json(fail('falhou'));
+        res.json(fail('Falha ao autenticar usuário'));
         console.log('Erro:', erro)
     }
 
 })
+
+// Exemplo de rota protegida
+router.get('/restrito', vToken, (req, res) => {
+    res.json({ mensagem: 'Rota protegida Acessada' });
+});
 
 
 module.exports = router;
