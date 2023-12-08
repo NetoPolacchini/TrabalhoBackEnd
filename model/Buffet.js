@@ -9,8 +9,21 @@ const BuffetModel = mongoose.model('Buffet', BuffetSchema)
 
 module.exports = {
 
-    list: async function(){
-        return BuffetModel.find({}).lean();
+    list: async function(limite, pagina){
+
+        if (![5, 10, 30].includes(limite)) {
+            throw new Error('Limite inválido. Use 5, 10 ou 30.');
+        }
+
+        try {
+            const startIndex = (pagina - 1) * limite;
+
+            return await BuffetModel.find({}).skip(startIndex).limit(limite).lean()
+
+        } catch (err) {
+            console.error('Erro ao listar Buffets:', err);
+            throw err;
+        }
     },
 
     delete: async function (id) {

@@ -4,10 +4,16 @@ const router = express.Router()
 const {sucess, fail} = require("../helpers/resposta")
 const HallDAO = require('../model/Hall')
 
-router.get("/", (req, res) => {
-    HallDAO.list().then((halls) => {
-        res.json(sucess(halls, "list"))
-    })
+router.get("/", async (req, res) => {
+    const limite = parseInt(req.query.limite) || 5;
+    const pagina = parseInt(req.query.pagina) || 1;
+
+    try{
+        const halls = await HallDAO.list(limite, pagina)
+        res.json(sucess(halls, "list"));
+    } catch (err){
+        res.status(500).json(err.message);
+    }
 })
 
 router.get("/:id", (req, res) => {

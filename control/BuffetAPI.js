@@ -3,11 +3,18 @@ const router = express.Router()
 
 const {sucess, fail} = require("../helpers/resposta")
 const BuffetDAO = require('../model/Buffet')
+const HallDAO = require("../model/Hall");
 
-router.get("/", (req, res) => {
-    BuffetDAO.list().then((buffets) => {
-        res.json(sucess(buffets, "list"))
-    })
+router.get("/", async (req, res) => {
+    const limite = parseInt(req.query.limite) || 5;
+    const pagina = parseInt(req.query.pagina) || 1;
+
+    try{
+        const buffets = await HallDAO.list(limite, pagina)
+        res.json(sucess(buffets, "list"));
+    } catch (err){
+        res.status(500).json(err.message);
+    }
 })
 
 router.get("/:id", (req, res) => {

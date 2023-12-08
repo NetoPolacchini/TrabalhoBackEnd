@@ -24,8 +24,21 @@ module.exports = {
         return HallModel.findById(id).lean();
     },
 
-    list: async function(){
-        return HallModel.find({}).lean();
+    list: async function(limite, pagina){
+
+        if (![5, 10, 30].includes(limite)) {
+            throw new Error('Limite inválido. Use 5, 10 ou 30.');
+        }
+
+        try {
+            const startIndex = (pagina - 1) * limite;
+
+            return await HallModel.find({}).skip(startIndex).limit(limite).lean()
+
+        } catch (err) {
+            console.error('Erro ao listar Salões:', err);
+            throw err;
+        }
     },
 
     save: async function(nome, endereco, capacidadeMaxima, preco){

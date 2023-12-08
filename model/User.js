@@ -77,12 +77,19 @@ module.exports = {
     },
 
 
-    listNonAdminUsers: async function () {
+    listNonAdminUsers: async function (limite, pagina) {
+
+        if (![5, 10, 30].includes(limite)) {
+            throw new Error('Limite inválido. Use 5, 10 ou 30.');
+        }
+
         try {
-            users = UserModel.find({isAdmin: false}).lean();
-            return users
+            const startIndex = (pagina - 1) * limite;
+
+            return await UserModel.find({isAdmin: false}).skip(startIndex).limit(limite).lean();
         } catch (err) {
-            console.log(err)
+            console.error('Erro ao listar Usuários:', err);
+            throw err;
         }
     },
 

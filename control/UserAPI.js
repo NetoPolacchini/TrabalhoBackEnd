@@ -59,8 +59,15 @@ router.post('/admin/create', vToken.isAdmin, async (req, res) => {
 });
 
 router.get('/admin/listNonAdmin',vToken.isAdmin, async(req, res) => {
-    const users = await UserDAO.listNonAdminUsers()
-    res.json({ users });
+    const limite = parseInt(req.query.limite) || 5;
+    const pagina = parseInt(req.query.pagina) || 1;
+
+    try{
+        const users = await UserDAO.listNonAdminUsers(limite, pagina)
+        res.json(sucess(users, "list"));
+    } catch (err){
+        res.status(500).json(err.message);
+    }
 });
 
 router.delete('/admin/listNonAdmin/delete/:id',vToken.isAdmin, async(req, res) => {
