@@ -17,7 +17,6 @@ module.exports = {
 
         jwt.verify(token, 'neto', (err, decoded) => {
             if (err) {
-                console.log(token)
                 console.log(err)
                 return res.status(401).json({ mensagem: 'Token inválido' });
             }
@@ -56,6 +55,7 @@ module.exports = {
                 }
 
                 if(user.isAdmin){
+                    req.user = decoded
                     next()
                 }else{
                     return res.status(401).json({ mensagem: 'Usuário não tem permissão' });

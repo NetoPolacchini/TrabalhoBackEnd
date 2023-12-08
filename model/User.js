@@ -20,46 +20,52 @@ const UserModel = mongoose.model('User', UserSchema)
 
 module.exports = {
 
-    update: async function(id, email, obj) {
+    authenticate: async function (email, senha) {
 
-        try{
-            let user = await UserModel.findById(id);
-            if(!user){
-                throw new Error('Usuário não encontrado');
+        try {
+            const user = await UserModel.findOne({email});
+            if (!user) {
+                console.log('Email não cadastrado');
+                return false;
             }
-            obj.email = email;
-            Object.assign(user, obj);
-            await user.save();
-            return user;
-        } catch (err){
-            console.error('Erro durante a atualização', err)
-            throw err;
+
+            const isPasswordValid = await bcrypt.compare(senha, user.senha);
+            if (isPasswordValid) {
+                console.log('Usuario autenticado com sucesso', user.email);
+
+                const payload = {
+                    id: user._id,
+                    nome: user.nome,
+                    email: user.email
+                };
+                console.log(payload)
+
+                return jwt.sign(payload, 'neto', {expiresIn: '1h'})
+
+            } else {
+                console.log('senha incorreta')
+                return false
+            }
+        } catch (err) {
+            console.log('Erro ao autenticar usuário:', err);
+            throw err
         }
+
     },
 
     delete: async function (id) {
         const user = await UserModel.findById(id)
 
-        if(!user){
+        if (!user) {
             throw new Error("Usuário não encontrado")
         }
 
-        if(user.isAdmin){
+        if (user.isAdmin) {
             throw new Error("Admin não pode ser deletado!");
-        }else{
+        } else {
             return UserModel.findByIdAndDelete(id);
         }
     },
-
-    listNonAdminUsers: async function () {
-        try{
-            users = UserModel.find({ isAdmin: false }).lean();
-            return users
-        }catch (err){
-            console.log(err)
-        }
-    },
-
 
     findById: async function (id) {
         try {
@@ -70,9 +76,19 @@ module.exports = {
         }
     },
 
-    save: async function(nome, email, senha, isAdmin){
 
-        const existingUser = await UserModel.findOne({ email });
+    listNonAdminUsers: async function () {
+        try {
+            users = UserModel.find({isAdmin: false}).lean();
+            return users
+        } catch (err) {
+            console.log(err)
+        }
+    },
+
+    save: async function (nome, email, senha, isAdmin) {
+
+        const existingUser = await UserModel.findOne({email});
 
         if (existingUser) {
             throw new Error("E-mail já registrado");
@@ -99,38 +115,24 @@ module.exports = {
         }
     },
 
-    authenticate: async function (email, senha){
+    update: async function (id, obj) {
 
-        try{
-            const user = await UserModel.findOne({email});
+        try {
+            let user = await UserModel.findById(id);
             if (!user) {
-                console.log('Email não cadastrado');
-                return false;
+                throw new Error('Usuário não encontrado');
             }
 
-            const isPasswordValid = await bcrypt.compare(senha, user.senha);
-            if(isPasswordValid){
-                console.log('Usuario autenticado com sucesso', user.email);
+            const saltRounds = 10;
+            const salt = await bcrypt.genSalt(saltRounds);
+            obj.senha = await bcrypt.hash(obj.senha, salt)
 
-                const payload={
-                    id:user._id,
-                    nome: user.nome,
-                    email: user.email
-                };
-                console.log(payload)
-
-                const token = jwt.sign(payload, 'neto', { expiresIn: '1h' });
-
-                return token
-
-            }else{
-                console.log('senha incorreta')
-                return false
-            }
+            Object.assign(user, obj);
+            await user.save();
+            return user;
         } catch (err) {
-            console.log('Erro ao autenticar usuário:', err);
-            throw err
+            console.error('Erro durante a atualização', err)
+            throw err;
         }
-
     }
 }

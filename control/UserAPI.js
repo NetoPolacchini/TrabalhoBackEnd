@@ -42,7 +42,7 @@ router.post('/login', async(req, res)=>{
     }
 })
 
-router.get('/admin/create', vToken.isAdmin, async (req, res) => {
+router.post('/admin/create', vToken.isAdmin, async (req, res) => {
     const {nome, email, senha} = req.body;
 
     try{
@@ -58,12 +58,40 @@ router.get('/admin/create', vToken.isAdmin, async (req, res) => {
     }
 });
 
-router.get('/restrito', vToken.token, (req, res) => {
-    res.json({ mensagem: 'Rota protegida Acessada' });
+router.get('/admin/listNonAdmin',vToken.isAdmin, async(req, res) => {
+    const users = await UserDAO.listNonAdminUsers()
+    res.json({ users });
 });
 
+router.delete('/admin/listNonAdmin/delete/:id',vToken.isAdmin, async(req, res) => {
+    try{
+        const user = await UserDAO.delete(req.params.id)
+        res.json(sucess(user, 'Usuário Deletado'))
+    } catch (err){
+        res.json(err.message)
+    }
+});
+
+router.put('/updateUser', vToken.token, async(req, res) => {
 
 
+    const newData = req.body;
+    const userID = req.user.id
 
+    try{
+        const updateUser = await UserDAO.update(userID, newData)
 
+        if(updateUser){
+            res.json(sucess(updateUser, 'Os dados do usuário foram atualizados'))
+        }else{
+            res.status(500).json(fail("Falha ao atualizar dados do Usuário"));
+        }
+    } catch (err){
+        res.json(err.message)
+    }
+});
+
+router.get('/restrito', vToken.token, (req, res) => {
+    res.json({ mensagem: 'Rota protegida Acessada com sucesso!' });
+});
 module.exports = router;

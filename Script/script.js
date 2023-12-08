@@ -52,26 +52,6 @@ router.get('/', async(req, res)=>{
     }
 })
 
-router.post('/loginAdm', async(req, res)=>{
-    const emailFornecido = 'admin@gmail.com'
-    const senhaFornecida = 'senha123'
-
-    try{
-        token = await UserDAO.authenticate(emailFornecido, senhaFornecida);
-        if(token){
-            res.status(200).json({ authorization: `${token}`, mensagem: 'Usuário Admin autenticado com sucesso' });
-
-            console.log('Cabeçalho configurado:', `${token}`);
-
-        }else{
-            res.json(fail('Erro ao autenticar'));
-        }
-    } catch (erro){
-        res.json(fail('Falha ao autenticar usuário'));
-        console.log('Erro:', erro)
-    }
-})
-
 router.get('/teste/isAdmin', vToken.isAdmin, async(req, res)=>{
     res.json({ mensagem: 'Conseguiu entrar na rota de Admin' });
 })
@@ -80,7 +60,7 @@ router.get('/teste/restrito', vToken.token, (req, res) => {
     res.json({ mensagem: 'Rota protegida Acessada' });
 });
 
-router.get('/teste/listNonAdmin', async(req, res) => {
+router.get('/teste/listNonAdmin',vToken.isAdmin, async(req, res) => {
     const users = await UserDAO.listNonAdminUsers()
     res.json({ users });
 });
@@ -110,8 +90,6 @@ router.put('/teste/updateUser', async(req, res) => {
     } catch (err){
         res.json(err.message)
     }
-
-
 });
 
 module.exports = router;
