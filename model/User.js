@@ -9,42 +9,72 @@ const UserSchema = new mongoose.Schema( {
         required: true,
         match: [/^\S+@\S+\.\S+$/, 'Por favor, insira um email válido']
     },
-    senha: String
+    senha: String,
+    isAdmin: {
+        type:Boolean,
+        default:false
+    }
 })
 
 const UserModel = mongoose.model('User', UserSchema)
 
-function gerarTokenJWT(user){
-    const payload = {
-        nome: user.nome,
-        email: user.email,
-        id: user._id
-    };
-
-    return jwt.sign(payload, 'neto', {expiresIn: 3600})
-}
-
 module.exports = {
+
+    update: async function(id, email, obj) {
+
+        try{
+            let user = await UserModel.findById(id);
+            if(!user){
+                throw new Error('Usuário não encontrado');
+            }
+            obj.email = email;
+            Object.assign(user, obj);
+            await user.save();
+            return user;
+        } catch (err){
+            console.error('Erro durante a atualização', err)
+            throw err;
+        }
+    },
+
+    delete: async function (id) {
+        const user = await UserModel.findById(id)
+
+        if(!user){
+            throw new Error("Usuário não encontrado")
+        }
+
+        if(user.isAdmin){
+            throw new Error("Admin não pode ser deletado!");
+        }else{
+            return UserModel.findByIdAndDelete(id);
+        }
+    },
+
+    listNonAdminUsers: async function () {
+        try{
+            users = UserModel.find({ isAdmin: false }).lean();
+            return users
+        }catch (err){
+            console.log(err)
+        }
+    },
 
 
     findById: async function (id) {
         try {
-            console.log('Buscando usuário por ID:', id);
-            const user = await UserModel.findById(id).lean();
-            console.log('Usuário encontrado:', user);
-            return user;
+            return await UserModel.findById(id).lean();
         } catch (error) {
             console.error('Erro ao buscar usuário por ID:', error);
             throw error;
         }
     },
 
-    save: async function(nome, email, senha){
+    save: async function(nome, email, senha, isAdmin){
 
         const existingUser = await UserModel.findOne({ email });
 
         if (existingUser) {
-            console.log('E-mail já registrado:', existingUser);
             throw new Error("E-mail já registrado");
         }
 
@@ -55,7 +85,8 @@ module.exports = {
         const user = new UserModel({
             nome: nome,
             email: email,
-            senha: hashedPassword
+            senha: hashedPassword,
+            isAdmin: isAdmin
         })
 
         try {
