@@ -12,7 +12,6 @@ module.exports = {
             if (token.startsWith('Bearer ')) {
                 token = token.substring(7);
             }
-            console.log('Token Forcenido')
         }
 
         jwt.verify(token, 'neto', (err, decoded) => {
@@ -64,6 +63,28 @@ module.exports = {
                 return res.status(500).json({ mensagem: 'Erro ao verificar usuário' });
             }
         });
+    },
+
+    validData: function (date){
+        const dateFormatRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
+
+        if (!dateFormatRegex.test(date)) {
+            throw new Error('O formato da data tem que er DD-MM-YYYY');
+        }
+
+        const [day, month, year] = date.split('-');
+
+        const dateObject = new Date(`${year}-${month}-${day}`);
+
+        const currentDate = new Date();
+
+        const teste = !isNaN(dateObject.getTime()) && dateObject >= currentDate;
+
+        if(teste){
+            return dateObject
+        }else{
+            throw new Error('A data não pode estar no passado');
+        }
     }
 
 }

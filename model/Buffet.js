@@ -2,7 +2,11 @@ const mongoose = require("mongoose")
 
 const BuffetSchema = new mongoose.Schema({
     nome: String,
-    tipoComida: String
+    tipoComida: String,
+    salaoId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Hall'
+    }
 })
 
 const BuffetModel = mongoose.model('Buffet', BuffetSchema)

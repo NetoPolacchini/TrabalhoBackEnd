@@ -1,6 +1,7 @@
 const mongoose = require("mongoose")
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const {HallModel} = require('../model/Hall')
 
 const UserSchema = new mongoose.Schema( {
     nome: String,
@@ -13,12 +14,27 @@ const UserSchema = new mongoose.Schema( {
     isAdmin: {
         type:Boolean,
         default:false
-    }
+    },
+    eventos:[{
+        data: Date,
+        hall: {type: mongoose.Schema.Types.ObjectId, ref: 'Hall'},
+        buffet: { type: mongoose.Schema.Types.ObjectId, ref: 'Buffet' }
+    }]
 })
 
 const UserModel = mongoose.model('User', UserSchema)
 
 module.exports = {
+
+    eventos: async function(userID, hall, buffet){
+        try{
+            return await UserModel.findByIdAndUpdate(userID,{
+                $push: {'eventos.halls': hall, 'eventos.buffets': buffet}
+            })
+        }catch (err){
+            throw err
+        }
+    },
 
     authenticate: async function (email, senha) {
 
@@ -141,5 +157,45 @@ module.exports = {
             console.error('Erro durante a atualização', err)
             throw err;
         }
-    }
+    },
+
+    alugarSalaoBuffet: async function(userId, idSalao, idBuffet, data){
+        try{
+            let user = await UserModel.findById(userId)
+
+            if(!user){
+                throw new Error('Usuário não encontrado')
+            }
+
+            await UserModel.updateOne(
+                {_id:userId},
+                {
+                    $push:{
+                        eventos:{
+                            data:data,
+                            hall: idSalao,
+                            buffet: idBuffet
+                        }
+                    }
+                }
+            )
+
+            await HallModel.updateOne(
+                { _id: idSalao },
+                {
+                    $push: {
+                        disponibilidade: {
+                            data: data
+                        }
+                    }
+                }
+            );
+
+
+            user = await UserModel.findById(userId).lean();
+            return user
+        } catch (err){
+            throw err
+        }
+    },
 }

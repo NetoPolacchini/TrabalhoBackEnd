@@ -92,4 +92,53 @@ router.put('/teste/updateUser', async(req, res) => {
     }
 });
 
+router.get("/disponiveis",vToken.token, async (req, res)=> {
+    const limite = parseInt(req.query.limite) || 5;
+    const pagina = parseInt(req.query.pagina) || 1;
+    const data = req.query.data;
+
+    try{
+        const dataFormatado = vToken.validData(data)
+        const halls = await HallDAO.listDisponiveis(limite, pagina, dataFormatado);
+        const buffets = await BuffetDAO.list(limite, pagina)
+
+        const responseData = {
+            halls:halls,
+            buffets:buffets
+        }
+        res.json(sucess(responseData, 'opa eae'))
+    } catch(err){
+        res.json(err.message)
+    }
+})
+
+router.put("/disponiveis",vToken.token, async (req, res)=> {
+
+    const userId = req.user.id;
+    const{idSalao,idBuffet} = req.body
+    const data = req.query.data;
+
+
+
+    try{
+        const dataFormatado = vToken.validData(data)
+        const salao = await HallDAO.getById(idSalao);
+        const buffet = await BuffetDAO.getById(idBuffet);
+
+        if (!salao || !buffet) {
+            return res.status(404).json(fail('Salão ou buffet não encontrado. Insira ID`s válidos'));
+        }
+
+        teste = await HallDAO.getByIdAndDate(idSalao, dataFormatado)
+        console.log(teste)
+        if(teste){
+            const user = await UserDAO.alugarSalaoBuffet(userId, idSalao, idBuffet, dataFormatado);
+            res.json(sucess(user, 'Salão e buffet alugados com sucesso'));
+        }
+
+    } catch (err){
+        res.json(err.message)
+    }
+})
+
 module.exports = router;

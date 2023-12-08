@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const {sucess, fail} = require("../helpers/resposta");
 const UserDAO = require('../model/User');
+const HallDAO = require('../model/Hall')
+const BuffetDAO = require('../model/Buffet')
 const vToken = require('../helpers/authenticate');
+const {eventos} = require("../model/User");
 
 
 
@@ -27,7 +30,7 @@ router.post('/login', async(req, res)=>{
     const {emailFornecido, senhaFornecida} = req.body;
 
     try{
-        token = await UserDAO.authenticate(emailFornecido, senhaFornecida);
+        const token = await UserDAO.authenticate(emailFornecido, senhaFornecida);
         if(token){
             res.header('authorization', token);
 
@@ -97,6 +100,31 @@ router.put('/updateUser', vToken.token, async(req, res) => {
         res.json(err.message)
     }
 });
+
+router.post('/evento', vToken.token, async (req, res)=>{
+    const userID = req.user.id;
+    const { idSalao, idBuffet } = req.body;
+
+    try{
+        const salaoValido = await HallDAO.getById(idSalao);
+        const buffetValido = await BuffetDAO.getById(idBuffet);
+
+        if(!salaoValido){
+            return res.status(400).json(fail('ID de salão inválido.'));
+        }
+
+        if(!buffetValido){
+            return res.status(400).json(fail('ID de Buffet inválido.'));
+        }
+
+        await eventos(userID, idSalao, idBuffet)
+
+        res.json(sucess('Evento atualizado com sucesso.'));
+
+    }catch (err){
+        res.json( err.message );
+    }
+})
 
 router.get('/restrito', vToken.token, (req, res) => {
     res.json({ mensagem: 'Rota protegida Acessada com sucesso!' });
