@@ -65,6 +65,20 @@ router.get('/teste/listNonAdmin',vToken.isAdmin, async(req, res) => {
     res.json({ users });
 });
 
+router.get('/teste/listEvents',vToken.token, async(req, res) => {
+    const userId = req.user.id;
+    const limite = parseInt(req.query.limite) || 5;
+    const pagina = parseInt(req.query.pagina) || 1;
+
+    try{
+        const eventos = await UserDAO.listEvents(limite, pagina, userId)
+        console.log('Aqui fora sai como:', eventos)
+        res.json({ eventos });
+    } catch (err){
+        res.json(err.message);
+    }
+});
+
 
 
 module.exports = router;

@@ -5,10 +5,50 @@ const UserDAO = require('../model/User');
 const HallDAO = require('../model/Hall')
 const BuffetDAO = require('../model/Buffet')
 const vToken = require('../helpers/authenticate');
-const {eventos} = require("../model/User");
 
 
-//Register User
+/**
+ * @swagger
+ * /cadastro:
+ *   post:
+ *     summary: Cadastra um novo usuário
+ *     tags:
+ *          - User
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               senha:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Sucesso ao cadastrar usuário
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Sucesso!
+ *               data:
+ *                 user: {...}
+ *       400:
+ *         description: E-mail já registrado
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: E-mail já registrado
+ *       500:
+ *         description: Falha ao salvar o novo Usuário
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Falha ao salvar o novo Usuário
+ */
 router.post('/cadastro', async(req, res)=>{
 
     const {nome, email, senha} = req.body;
@@ -26,7 +66,50 @@ router.post('/cadastro', async(req, res)=>{
     }
 })
 
-//Login
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Autentica um usuário
+ *     tags:
+ *          - User
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               emailFornecido:
+ *                 type: string
+ *               senhaFornecida:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Usuário autenticado com sucesso
+ *         headers:
+ *           authorization:
+ *             description: Token de autenticação
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Usuário autenticado com sucesso
+ *               data: {...}
+ *       400:
+ *         description: Erro ao autenticar
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro ao autenticar
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro interno do servidor
+ */
 router.post('/login', async(req, res)=>{
     const {emailFornecido, senhaFornecida} = req.body;
 
@@ -45,7 +128,49 @@ router.post('/login', async(req, res)=>{
     }
 })
 
-//Create another ADM
+/**
+ * @swagger
+ * /admin/create:
+ *   post:
+ *     summary: Cria um novo usuário administrador
+ *     tags:
+ *          - Admin
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               senha:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Usuário administrador criado com sucesso
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Usuário administrador criado com sucesso
+ *               data: {...}
+ *       400:
+ *         description: E-mail já registrado ou outros erros de entrada
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: E-mail já registrado ou outros erros de entrada
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro interno do servidor
+ */
 router.post('/admin/create', vToken.isAdmin, async (req, res) => {
     const {nome, email, senha} = req.body;
 
@@ -62,7 +187,44 @@ router.post('/admin/create', vToken.isAdmin, async (req, res) => {
     }
 });
 
-//List Non admin users
+/**
+ * @swagger
+ * /admin/listNonAdmin:
+ *   get:
+ *     summary: Retorna uma lista de usuários não administradores
+ *     tags:
+ *          - Admin
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limite
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Número máximo de usuários a serem retornados (opcional, padrão 5)
+ *       - in: query
+ *         name: pagina
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Número da página a ser retornada (opcional, padrão 1)
+ *     responses:
+ *       200:
+ *         description: Sucesso ao obter a lista de usuários não administradores
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Usuários não administradores obtidos com sucesso
+ *               data:
+ *                 users: [...]
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro interno do servidor
+ */
 router.get('/admin/listNonAdmin',vToken.isAdmin, async(req, res) => {
     const limite = parseInt(req.query.limite) || 5;
     const pagina = parseInt(req.query.pagina) || 1;
@@ -75,7 +237,43 @@ router.get('/admin/listNonAdmin',vToken.isAdmin, async(req, res) => {
     }
 });
 
-//Delete Specific User
+/**
+ * @swagger
+ * /admin/listNonAdmin/delete/{id}:
+ *   delete:
+ *     summary: Deleta um usuário não administrador
+ *     tags:
+ *          - Admin
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID do usuário não administrador a ser deletado
+ *     responses:
+ *       200:
+ *         description: Usuário não administrador deletado com sucesso
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Usuário não administrador deletado com sucesso
+ *               data: {...}
+ *       404:
+ *         description: Usuário não encontrado
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Usuário não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro interno do servidor
+ */
 router.delete('/admin/listNonAdmin/delete/:id',vToken.isAdmin, async(req, res) => {
     try{
         const user = await UserDAO.delete(req.params.id)
@@ -85,7 +283,47 @@ router.delete('/admin/listNonAdmin/delete/:id',vToken.isAdmin, async(req, res) =
     }
 });
 
-//Update Some User by ADM
+/**
+ * @swagger
+ * /admin/listNonAdmin/update/{id}:
+ *   put:
+ *     summary: Atualiza os dados de um usuário não administrador
+ *     tags:
+ *          - Admin
+ *     security:
+ *       - BearerAuth: [] # Adicione a tag de autenticação BearerAuth para a rota
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID do usuário não administrador a ser atualizado
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *           example:
+ *             nome: string
+ *             email: string
+ *             senha: string
+ *     responses:
+ *       200:
+ *         description: Dados do usuário não administrador atualizados com sucesso
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Os dados do usuário foram atualizados
+ *               data: {...}
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Falha ao atualizar dados do Usuário
+ */
 router.put('/admin/listNonAdmin/update/:id',vToken.isAdmin, async(req, res) => {
 
     const newData = req.body;
@@ -104,7 +342,41 @@ router.put('/admin/listNonAdmin/update/:id',vToken.isAdmin, async(req, res) => {
     }
 });
 
-//Update User
+/**
+ * @swagger
+ * /updateUser:
+ *   put:
+ *     summary: Atualiza os dados do próprio usuário
+ *     tags:
+ *          - User
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: body
+ *         name: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *           example:
+ *             nome: string
+ *             email: string
+ *             senha: senha
+ *     responses:
+ *       200:
+ *         description: Dados do usuário atualizados com sucesso
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Os dados do usuário foram atualizados
+ *               data: {...}
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Falha ao atualizar dados do Usuário
+ */
 router.put('/updateUser', vToken.token, async(req, res) => {
 
 
@@ -124,7 +396,48 @@ router.put('/updateUser', vToken.token, async(req, res) => {
     }
 });
 
-//Return All Hall`s and Buffet`s available
+/**
+ * @swagger
+ * /disponiveis:
+ *   get:
+ *     summary: Retorna salões e buffets disponíveis
+ *     tags:
+ *          - User
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limite
+ *         schema:
+ *           type: integer
+ *         description: Número máximo de resultados a serem retornados (opcional, padrão 5)
+ *       - in: query
+ *         name: pagina
+ *         schema:
+ *           type: integer
+ *         description: Número da página a ser retornada (opcional, padrão 1)
+ *       - in: query
+ *         name: data
+ *         schema:
+ *           type: string
+ *         description: Data para filtrar salões disponíveis (opcional)
+ *     responses:
+ *       200:
+ *         description: Sucesso ao obter salões e buffets disponíveis
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Lista de Salões e buffets disponíveis
+ *               data:
+ *                 halls: [...]
+ *                 buffets: [...]
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro interno do servidor
+ */
 router.get("/disponiveis",vToken.token, async (req, res)=> {
     const limite = parseInt(req.query.limite) || 5;
     const pagina = parseInt(req.query.pagina) || 1;
@@ -147,7 +460,51 @@ router.get("/disponiveis",vToken.token, async (req, res)=> {
     }
 })
 
-//Choose buffet and hall
+
+
+/**
+ * @swagger
+ * /disponiveis:
+ *   put:
+ *     summary: Aluga salão e buffet
+ *     tags:
+ *          - User
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: data
+ *         schema:
+ *           type: string
+ *         description: Data para alugar salão e buffet (opcional)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           example:
+ *             idSalao: 1
+ *             idBuffet: 1
+ *     responses:
+ *       200:
+ *         description: Sucesso ao alugar salão e buffet
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Salão e buffet alugados com sucesso
+ *               data: {...}
+ *       404:
+ *         description: Salão ou buffet não encontrado. Insira ID's válidos.
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Salão ou buffet não encontrado. Insira ID's válidos.
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Erro interno do servidor
+ */
 router.put("/disponiveis",vToken.token, async (req, res)=> {
 
     const userId = req.user.id;

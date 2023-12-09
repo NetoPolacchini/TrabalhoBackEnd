@@ -25,6 +25,9 @@ const UserSchema = new mongoose.Schema( {
 const UserModel = mongoose.model('User', UserSchema)
 
 module.exports = {
+
+
+
     authenticate: async function (email, senha) {
         try {
 
@@ -83,6 +86,27 @@ module.exports = {
         }
     },
 
+    listEvents: async function(limite, pagina, userId){
+
+        if (![5, 10, 30].includes(limite)) {
+            throw new Error('Limite inválido. Use 5, 10 ou 30.');
+        }
+
+        try {
+            const startIndex = (pagina - 1) * limite;
+
+            const user = await UserModel.findById(userId);
+            const eventos = user.eventos;
+
+            const eventosPaginados = eventos.slice(startIndex, startIndex + limite);
+
+
+            return eventosPaginados
+        } catch (err) {
+            console.error('Erro ao listar Eventos do Usuário:', err);
+            throw err;
+        }
+    },
 
     listNonAdminUsers: async function (limite, pagina) {
 
